@@ -188,7 +188,10 @@ class DeviceCapability(object):
         else:
             resource = WryDict({resource_name: input_dict})
         response = common.put_resource(self.client, resource, silent=silent, options=self.options)
-        print response
+
+    def walk(self, resource_name,  wsman_filter=None):
+        '''TODO: Rename this function...'''
+        return common.enumerate_resource(self.client, resource_name, wsman_filter=wsman_filter, options=self.options)
 
 
 class AMTPower(DeviceCapability):
@@ -385,16 +388,75 @@ class AMTBoot(DeviceCapability):
     @property
     def supported_media(self):
         '''Media the device can be configured to boot from.'''
-        return tuple(result.group(1) for result in (re.match(r'^Force(.+)Boot$', cap) for cap in self._supported_capabilities) if result)
-        # Add a 'Default' so it can be re-set?
+        returned = self.walk('CIM_BootSourceSetting')
+        return [source['StructuredBootString'].split(':')[-2] for source in returned['CIM_BootSourceSetting']]
 
     @property
     def medium(self):
-        pass
+        raise NotImplemented('It is not currently possible to detect which medium a device will boot from.')
 
     @medium.setter
     def medium(self, value):
-        pass
+        '''Set boot medium for next boot.'''
+        # Zero out boot options - unwise, but just testing right now...
+        settings = self.get('AMT_BootSettingData')
+        for setting in settings:
+            if type(settings[setting]) == int:
+                settings[setting] = 0
+            elif type(settings[setting]) == bool:
+                settings[setting] = False
+            else:
+                pass
+        if value == 'Default':
+            raise NotImplemented
+        else:
+
+            boot_config = self.get('CIM_BootConfigSetting') # Should be an
+            # enumerate, as it has intances... But for now...
+            config_instance = str(boot_config['InstanceID'])
+
+            sources = self.walk('CIM_BootSourceSetting')['CIM_BootSourceSetting']
+            for source in sources:
+                if value in source['StructuredBootString']:
+                    instance_id = source['InstanceID']
+                    break
+
+            input_dict = {
+                'CIM_BootConfigSetting': {
+                    'ChangeBootOrder_INPUT': OrderedDict([
+                        ('@xmlns', RESOURCE_URIs['CIM_BootConfigSetting']),
+
+                        ('Source', OrderedDict([
+                            ('Address', {
+                                '#text': SCHEMAS['addressing'],
+                                '@xmlns': SCHEMAS['addressing'],
+                            }),
+                            ('@xmlns', RESOURCE_URIs['CIM_BootConfigSetting']),
+                            ('ReferenceParameters', {
+                                'ResourceURI': {
+                                    '#text': RESOURCE_URIs['CIM_BootSourceSetting'],
+                                    '@xmlns': SCHEMAS['wsman'],
+                                },
+                                '@xmlns': SCHEMAS['addressing'],
+                                'SelectorSet': {
+                                    'Selector': {
+                                        '#text': instance_id,
+                                        '@Name': 'InstanceID',
+                                    },
+                                    '@xmlns': SCHEMAS['wsman'],
+                                },
+                            }),
+                        ])),
+
+                    ]),
+                }
+            }
+
+            self.options.add_selector('InstanceID', config_instance) # possible
+            # to work on a copy of this? Does it go away for the next request?
+
+            response = common.invoke_method(self.client, 'ChangeBootOrder', input_dict, options=self.options)
+
 
     @property
     def supported_options(self):
@@ -415,13 +477,26 @@ class AMTBoot(DeviceCapability):
         return self._set_capabilities(False, *capabilities)
 
     def _set_capabilities(self, enabled_state, *capabilities):
-        if enabled_state == True:
-            role = '1'
-        elif enabled_state == False:
-            role = '32768'
-
-        to_put = dict((cap, True) for cap in capabilities)
-        settings = self.put('AMT_BootSettingData', to_put)
+        #if enabled_state == True:
+        #    role = '1'
+        #elif enabled_state == False:
+        #    role = '32768'
+        role = '1'
+        to_put = dict((cap, enabled_state) for cap in capabilities) # The best
+        # way of doing it? Just do kwargs instead? And need to block trying to
+        # change boot order from here...
+        settings = self.get('AMT_BootSettingData')
+        for setting in settings:
+            if type(settings[setting]) == int:
+                settings[setting] = 0
+            elif type(settings[setting]) == bool:
+                settings[setting] = False
+            else:
+                pass
+        settings.update(to_put)
+        returned = self.put('AMT_BootSettingData', settings)
+        print returned
+        return
         svc = self.get('CIM_BootService')
         assert svc['ElementName'] == 'Intel(r) AMT Boot Service'
         input_dict = {
