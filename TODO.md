@@ -4,3 +4,5 @@
     - Perhaps source allowed methods for each resource from the schema
 - Make invoking instance method more DRY [in progress]
 - Add SOL functionality
+- Make the operation timeout configurable
+- Reusable options (to stop electors sticking around, amongst other things.)
