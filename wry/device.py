@@ -11,8 +11,8 @@
 # under the License.
 
 
-import pywsman
 import re
+from wry.monkey import pywsman
 from collections import namedtuple
 from collections import OrderedDict
 from wry import common
@@ -230,8 +230,9 @@ class AMTPower(DeviceCapability):
                 },  
             }
         }    
-        self.options.add_selector('Name', 'Intel(r) AMT Power Management Service') # possible to work on a copy of this?
-        response = common.invoke_method(self.client, 'RequestPowerStateChange', input_dict, options=self.options)
+        options = self.options.__copy__()
+        options.add_selector('Name', 'Intel(r) AMT Power Management Service')
+        response = common.invoke_method(self.client, 'RequestPowerStateChange', input_dict, options=options)
         return not response['RequestPowerStateChange_OUTPUT']['ReturnValue']
 
     @property
@@ -452,10 +453,10 @@ class AMTBoot(DeviceCapability):
                 }
             }
 
-            self.options.add_selector('InstanceID', config_instance) # possible
-            # to work on a copy of this? Does it go away for the next request?
-
-            response = common.invoke_method(self.client, 'ChangeBootOrder', input_dict, options=self.options)
+            options = self.options.__copy__()
+            options.set_timeout(60000)
+            options.add_selector('InstanceID', config_instance)
+            response = common.invoke_method(self.client, 'ChangeBootOrder', input_dict, options=options)
 
 
     @property

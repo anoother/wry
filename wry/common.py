@@ -14,10 +14,10 @@
 Common functionalities for AMT Driver
 """
 import logging
-import pywsman
 import xmltodict
 from ast import literal_eval
 from xml.etree import ElementTree
+from wry.monkey import pywsman
 from wry import data_structures
 from wry import exceptions
 from wry.decorators import retry, add_client_options
