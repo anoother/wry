@@ -15,14 +15,16 @@ Common functionalities for AMT Driver
 """
 import logging
 import xmltodict
+import json
 from ast import literal_eval
 from xml.etree import ElementTree
 from wry.monkey import pywsman
 from wry import data_structures
 from wry import exceptions
 from wry.decorators import retry, add_client_options
-from wry.config import RESOURCE_URIs
+from wry.config import RESOURCE_URIs, SCHEMAS
 from wry.data_structures import _strip_namespace_prefixes, WryDict
+from collections import OrderedDict
 
 
 
@@ -124,22 +126,67 @@ def put_resource(client, indict, options=None, uri=None, silent=False):
     '''
     if not uri:
         uri = RESOURCE_URIs[indict.keys()[0]] # Possible to support multiple simply here?
-    data = indict.as_xml()
+    data = indict.as_xml() # Get rid of this, to get rid of with_namespaces()
     doc = wsman_put(client, uri, data, options=options, silent=silent)
     return WryDict(doc)
 
 
-def invoke_method(client, method, input_dict, options=None):
-    resource_name = input_dict.keys()[0]
-    input_dict = WryDict(input_dict).with_namespaces()
-    data = input_dict[resource_name]
-    uri = data.pop(u'@xmlns')
-    data.values()[0][u'@xmlns'] = uri
+def invoke_method(service_name, resource_name, affected_item, method_name, options, client, selector=None, method_args=None, anonymous=False):
+    '''
+    selector should be a dictionary in the form:
+    {selector_name: {element_name: element_value}} ???
+    Change this for a tuple, I think, it will make things easier.
+    '''
+    if anonymous:
+        address_schema = 'addressing_anonymous'
+    else:
+        address_schema = 'addressing'
+    options = options.__copy__()
+    service_uri = RESOURCE_URIs[service_name]
+    data = {
+        method_name + '_INPUT': OrderedDict([
+            ('@xmlns', service_uri),
+            (affected_item, OrderedDict([
+                ('@xmlns', service_uri),
+                ('Address', {
+                    '#text': SCHEMAS[address_schema],
+                    '@xmlns': SCHEMAS['addressing'],
+                }),
+                ('ReferenceParameters', {
+                    'ResourceURI': {
+                        '#text': RESOURCE_URIs[resource_name],
+                        '@xmlns': SCHEMAS['wsman'],
+                    },
+                    '@xmlns': SCHEMAS['addressing'],
+                }),
+            ])
+            )
+        ])
+    }
+
+    if selector:
+        data[method_name + '_INPUT'][affected_item]['ReferenceParameters']['SelectorSet'] = {
+            'Selector': {
+                '#text': selector[1],
+                '@Name': selector[0],
+            },
+            '@xmlns': SCHEMAS['wsman'],
+        }
+        if len(selector) > 2:
+            assert len(selector) == 3
+            options.add_selector(selector[0], selector[-1])
+
+    for arg_name, arg_value in method_args:
+        data[method_name + '_INPUT'][arg_name] = {
+            '#text': arg_value,
+            '@xmlns': service_uri,
+        }
+
     xml = xmltodict.unparse(data, full_document=False, pretty=True)
-    doc = wsman_invoke(client, RESOURCE_URIs[resource_name], method, xml, options=options)
+    doc = wsman_invoke(client, service_uri, method_name, xml, options=options)
     returned = WryDict(doc)
-    return_value = returned[returned.keys()[0]]['ReturnValue']
+    return_value = returned[method_name + '_OUTPUT']['ReturnValue']
     if return_value != 0:
         raise exceptions.NonZeroReturn(return_value)
-    return returned
+    return not return_value
 

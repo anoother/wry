@@ -179,7 +179,7 @@ class DeviceCapability(object):
 
     def put(self, resource_name=None, input_dict=None, silent=False,
         as_update=True): # Ideally want keyword-only args or a refactor here.
-                         #Want to be able to supply only input_dict...
+                         # Want to be able to supply only input_dict...
         if not resource_name:
             resource_name = self.resource_name
         if as_update:
@@ -412,15 +412,16 @@ class AMTBoot(DeviceCapability):
             raise NotImplemented
         else:
 
-            boot_config = self.get('CIM_BootConfigSetting') # Should be an
-            # enumerate, as it has intances... But for now...
-            config_instance = str(boot_config['InstanceID'])
-
             sources = self.walk('CIM_BootSourceSetting')['CIM_BootSourceSetting']
             for source in sources:
                 if value in source['StructuredBootString']:
                     instance_id = source['InstanceID']
                     break
+
+            boot_config = self.get('CIM_BootConfigSetting') # Should be an
+            # enumerate, as it has intances... But for now...
+            config_instance = str(boot_config['InstanceID'])
+            print config_instance
 
             input_dict = {
                 'CIM_BootConfigSetting': {
@@ -457,7 +458,8 @@ class AMTBoot(DeviceCapability):
             options.set_timeout(60000)
             options.add_selector('InstanceID', config_instance)
             response = common.invoke_method(self.client, 'ChangeBootOrder', input_dict, options=options)
-
+            self._set_boot_config_role()
+            return not response['ChangeBootOrder_OUTPUT']['ReturnValue']
 
     @property
     def supported_options(self):
@@ -477,12 +479,25 @@ class AMTBoot(DeviceCapability):
         '''Disable the specified capabilit[ies] for next boot.'''
         return self._set_capabilities(False, *capabilities)
 
+    def _set_boot_config_role(self, enabled_state=True):
+        if enabled_state == True:
+            role = '1'
+        elif enabled_state == False:
+            role = '32768'
+        svc = self.get('CIM_BootService')
+        assert svc['ElementName'] == 'Intel(r) AMT Boot Service'
+        return common.invoke_method(
+            service_name='CIM_BootService',
+            resource_name='CIM_BootConfigSetting',
+            affected_item='BootConfigSetting',
+            method_name='SetBootConfigRole',
+            options=self.options,
+            client=self.client,
+            selector=('InstanceID', 'Intel(r) AMT: Boot Configuration 0', ),
+            method_args=[('Role', role)],
+        )
+
     def _set_capabilities(self, enabled_state, *capabilities):
-        #if enabled_state == True:
-        #    role = '1'
-        #elif enabled_state == False:
-        #    role = '32768'
-        role = '1'
         to_put = dict((cap, enabled_state) for cap in capabilities) # The best
         # way of doing it? Just do kwargs instead? And need to block trying to
         # change boot order from here...
@@ -496,43 +511,3 @@ class AMTBoot(DeviceCapability):
                 pass
         settings.update(to_put)
         returned = self.put('AMT_BootSettingData', settings)
-        print returned
-        return
-        svc = self.get('CIM_BootService')
-        assert svc['ElementName'] == 'Intel(r) AMT Boot Service'
-        input_dict = {
-            'CIM_BootService': {
-                'SetBootConfigRole_INPUT': OrderedDict([
-                    ('@xmlns', RESOURCE_URIs['CIM_BootService']),
-
-                    ('BootConfigSetting', OrderedDict([
-                        ('Address', {
-                            '#text': SCHEMAS['addressing'],
-                            '@xmlns': SCHEMAS['addressing'],
-                        }),
-                        ('@xmlns', RESOURCE_URIs['CIM_BootService']),
-                        ('ReferenceParameters', {
-                            'ResourceURI': {
-                                '#text': RESOURCE_URIs['CIM_BootConfigSetting'],
-                                '@xmlns': SCHEMAS['wsman'],
-                            },
-                            '@xmlns': SCHEMAS['addressing'],
-                            'SelectorSet': {
-                                'Selector': {
-                                    '#text': 'Intel(r) AMT: Boot Configuration 0',
-                                    '@Name': 'InstanceID',
-                                },
-                                '@xmlns': SCHEMAS['wsman'],
-                            },
-                        }),
-                    ])),
-
-                    ('Role', OrderedDict([
-                        ('#text', role),
-                        ('@xmlns', RESOURCE_URIs['CIM_BootService']),
-                    ])),
-                ]),
-            }
-        }
-        response = common.invoke_method(self.client, 'SetBootConfigRole', input_dict, options=self.options)
-        return not response['SetBootConfigRole_OUTPUT']['ReturnValue']
