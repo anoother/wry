@@ -269,7 +269,13 @@ class AMTKVM(DeviceCapability):
                 },
             }
         }
-        return common.invoke_method(self.client, 'RequestStateChange', input_dict, options=self.options)
+        return common.invoke_method(
+            service_name='CIM_KVMRedirectionSAP',
+            method_name='RequestStateChange',
+            options=self.options,
+            client=self.client,
+            args_before=[('RequestedState', str(requested_state)), ],
+        )
 
     @property
     def enabled(self):

@@ -131,7 +131,7 @@ def put_resource(client, indict, options=None, uri=None, silent=False):
     return WryDict(doc)
 
 
-def invoke_method(service_name, resource_name, affected_item, method_name, options, client, selector=None, args_before=(), args_after=(), anonymous=False):
+def invoke_method(service_name, method_name, options, client, resource_name=None, affected_item=None, selector=None, args_before=(), args_after=(), anonymous=False):
     '''
     selector should be a dictionary in the form:
     {selector_name: {element_name: element_value}} ???
@@ -151,25 +151,25 @@ def invoke_method(service_name, resource_name, affected_item, method_name, optio
                 '@xmlns': service_uri,
             }
 
-    data = {method_name + '_INPUT': OrderedDict()}
+    data = {method_name + '_INPUT': OrderedDict({'@xmlns': service_uri})}
     add_arguments(data, args_before)
-    data[method_name + '_INPUT'].update(OrderedDict([
-        ('@xmlns', service_uri),
-        (affected_item, OrderedDict([
-            ('@xmlns', service_uri),
-            ('Address', {
-                '#text': SCHEMAS[address_schema],
-                '@xmlns': SCHEMAS['addressing'],
-            }),
-            ('ReferenceParameters', {
-                'ResourceURI': {
-                    '#text': RESOURCE_URIs[resource_name],
-                    '@xmlns': SCHEMAS['wsman'],
-                },
-                '@xmlns': SCHEMAS['addressing'],
-            }),
+    if resource_name:
+        data[method_name + '_INPUT'].update(OrderedDict([
+            (affected_item, OrderedDict([
+                ('@xmlns', service_uri),
+                ('Address', {
+                    '#text': SCHEMAS[address_schema],
+                    '@xmlns': SCHEMAS['addressing'],
+                }),
+                ('ReferenceParameters', {
+                    'ResourceURI': {
+                        '#text': RESOURCE_URIs[resource_name],
+                        '@xmlns': SCHEMAS['wsman'],
+                    },
+                    '@xmlns': SCHEMAS['addressing'],
+                }),
+            ]))
         ]))
-    ]))
     add_arguments(data, args_after)
 
     if selector:
