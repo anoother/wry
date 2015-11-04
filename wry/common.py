@@ -136,6 +136,7 @@ def invoke_method(client, method, input_dict, options=None):
     uri = data.pop(u'@xmlns')
     data.values()[0][u'@xmlns'] = uri
     xml = xmltodict.unparse(data, full_document=False, pretty=True)
+    print xml
     doc = wsman_invoke(client, RESOURCE_URIs[resource_name], method, xml, options=options)
     returned = WryDict(doc)
     return_value = returned[returned.keys()[0]]['ReturnValue']
