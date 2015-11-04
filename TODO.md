@@ -1,8 +1,6 @@
 - Proper logging
 - Make RESOURCE_URIs a json file?
-- Implement native RequestStateChange support...
-    - Perhaps source allowed methods for each resource from the schema
-- Make invoking instance method more DRY [in progress]
 - Add SOL functionality
 - Make the operation timeout configurable
 - DONE: Reusable options (to stop selectors sticking around, amongst other things.)
+- DONE: Make invoking instance method more DRY
