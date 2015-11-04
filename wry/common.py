@@ -144,12 +144,15 @@ def invoke_method(service_name, resource_name, affected_item, method_name, optio
     options = options.__copy__()
     service_uri = RESOURCE_URIs[service_name]
 
+    def add_arguments(data_dict, argument_pairs=()):
+        for arg_name, arg_value in argument_pairs:
+            data_dict[method_name + '_INPUT'][arg_name] = {
+                '#text': arg_value,
+                '@xmlns': service_uri,
+            }
+
     data = {method_name + '_INPUT': OrderedDict()}
-    for arg_name, arg_value in args_before:
-        data[method_name + '_INPUT'][arg_name] = {
-            '#text': arg_value,
-            '@xmlns': service_uri,
-        }
+    add_arguments(data, args_before)
     data[method_name + '_INPUT'].update(OrderedDict([
         ('@xmlns', service_uri),
         (affected_item, OrderedDict([
@@ -167,11 +170,7 @@ def invoke_method(service_name, resource_name, affected_item, method_name, optio
             }),
         ]))
     ]))
-    for arg_name, arg_value in args_after:
-        data[method_name + '_INPUT'][arg_name] = {
-            '#text': arg_value,
-            '@xmlns': service_uri,
-        }
+    add_arguments(data, args_after)
 
     if selector:
         data[method_name + '_INPUT'][affected_item]['ReferenceParameters']['SelectorSet'] = {
