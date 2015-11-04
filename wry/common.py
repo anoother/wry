@@ -15,16 +15,16 @@ Common functionalities for AMT Driver
 """
 import logging
 import xmltodict
-import json
+import json # temporary
 from ast import literal_eval
 from xml.etree import ElementTree
 from wry.monkey import pywsman
-from wry import data_structures
+from wry import data_structures # Needed?
 from wry import exceptions
 from wry.decorators import retry, add_client_options
 from wry.config import RESOURCE_URIs, SCHEMAS
 from wry.data_structures import _strip_namespace_prefixes, WryDict
-from collections import OrderedDict
+from collections import OrderedDict # Temporary
 
 
 
@@ -131,7 +131,7 @@ def put_resource(client, indict, options=None, uri=None, silent=False):
     return WryDict(doc)
 
 
-def invoke_method(service_name, resource_name, affected_item, method_name, options, client, selector=None, method_args=None, anonymous=False):
+def invoke_method(service_name, resource_name, affected_item, method_name, options, client, selector=None, method_args=(), anonymous=False):
     '''
     selector should be a dictionary in the form:
     {selector_name: {element_name: element_value}} ???
@@ -183,6 +183,7 @@ def invoke_method(service_name, resource_name, affected_item, method_name, optio
         }
 
     xml = xmltodict.unparse(data, full_document=False, pretty=True)
+    print xml
     doc = wsman_invoke(client, service_uri, method_name, xml, options=options)
     returned = WryDict(doc)
     return_value = returned[method_name + '_OUTPUT']['ReturnValue']

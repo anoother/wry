@@ -202,38 +202,15 @@ class AMTPower(DeviceCapability):
         super(AMTPower, self).__init__(*args, **kwargs)
 
     def request_power_state_change(self, power_state): 
-        resource_name = 'CIM_PowerManagementService'
-        input_dict = {  
-            resource_name: {
-                'RequestPowerStateChange_INPUT': {
-                    'PowerState': power_state,
-                    'ManagedElement': OrderedDict([
-                        ('Address', {
-                            '#text': SCHEMAS['addressing_anonymous'],
-                            '@xmlns': SCHEMAS['addressing'],
-                        }),  
-                        ('ReferenceParameters', {      
-                            'ResourceURI': {    
-                                '#text': RESOURCE_URIs['CIM_ComputerSystem'],
-                                '@xmlns': SCHEMAS['wsman'],
-                            },
-                            '@xmlns': SCHEMAS['addressing'],
-                            'SelectorSet': {    
-                                'Selector': {       
-                                    '#text': 'ManagedSystem',
-                                    '@Name': 'Name',
-                                },
-                                '@xmlns': SCHEMAS['wsman'],
-                            },
-                        }),
-                    ]),
-                },  
-            }
-        }    
-        options = self.options.__copy__()
-        options.add_selector('Name', 'Intel(r) AMT Power Management Service')
-        response = common.invoke_method(self.client, 'RequestPowerStateChange', input_dict, options=options)
-        return not response['RequestPowerStateChange_OUTPUT']['ReturnValue']
+        return common.invoke_method(
+            service_name='CIM_PowerManagementService',
+            resource_name='CIM_ComputerSystem',
+            affected_item='PowerState',
+            method_name='RequestPowerStateChange',
+            options=self.options,
+            client=self.client,
+            selector=('Name', 'ManagedSystem', 'Intel(r) AMT Power Management Service', ),
+        )
 
     @property
     def state(self):
@@ -408,58 +385,28 @@ class AMTBoot(DeviceCapability):
                 settings[setting] = False
             else:
                 pass
-        if value == 'Default':
-            raise NotImplemented
-        else:
 
-            sources = self.walk('CIM_BootSourceSetting')['CIM_BootSourceSetting']
-            for source in sources:
-                if value in source['StructuredBootString']:
-                    instance_id = source['InstanceID']
-                    break
+        sources = self.walk('CIM_BootSourceSetting')['CIM_BootSourceSetting']
+        for source in sources:
+            if value in source['StructuredBootString']:
+                instance_id = source['InstanceID']
+                break
 
-            boot_config = self.get('CIM_BootConfigSetting') # Should be an
-            # enumerate, as it has intances... But for now...
-            config_instance = str(boot_config['InstanceID'])
-            print config_instance
+        boot_config = self.get('CIM_BootConfigSetting') # Should be an
+        # enumerate, as it has intances... But for now...
+        config_instance = str(boot_config['InstanceID'])
 
-            input_dict = {
-                'CIM_BootConfigSetting': {
-                    'ChangeBootOrder_INPUT': OrderedDict([
-                        ('@xmlns', RESOURCE_URIs['CIM_BootConfigSetting']),
-
-                        ('Source', OrderedDict([
-                            ('Address', {
-                                '#text': SCHEMAS['addressing'],
-                                '@xmlns': SCHEMAS['addressing'],
-                            }),
-                            ('@xmlns', RESOURCE_URIs['CIM_BootConfigSetting']),
-                            ('ReferenceParameters', {
-                                'ResourceURI': {
-                                    '#text': RESOURCE_URIs['CIM_BootSourceSetting'],
-                                    '@xmlns': SCHEMAS['wsman'],
-                                },
-                                '@xmlns': SCHEMAS['addressing'],
-                                'SelectorSet': {
-                                    'Selector': {
-                                        '#text': instance_id,
-                                        '@Name': 'InstanceID',
-                                    },
-                                    '@xmlns': SCHEMAS['wsman'],
-                                },
-                            }),
-                        ])),
-
-                    ]),
-                }
-            }
-
-            options = self.options.__copy__()
-            options.set_timeout(60000)
-            options.add_selector('InstanceID', config_instance)
-            response = common.invoke_method(self.client, 'ChangeBootOrder', input_dict, options=options)
-            self._set_boot_config_role()
-            return not response['ChangeBootOrder_OUTPUT']['ReturnValue']
+        response = common.invoke_method(
+            service_name='CIM_BootConfigSetting',
+            resource_name='CIM_BootSourceSetting',
+            affected_item='Source',
+            method_name='ChangeBootOrder',
+            options=self.options,
+            client=self.client,
+            selector=('InstanceID', instance_id, config_instance, ),
+        )
+        self._set_boot_config_role()
+        return response
 
     @property
     def supported_options(self):
