@@ -205,11 +205,13 @@ class AMTPower(DeviceCapability):
         return common.invoke_method(
             service_name='CIM_PowerManagementService',
             resource_name='CIM_ComputerSystem',
-            affected_item='PowerState',
+            affected_item='ManagedElement',
             method_name='RequestPowerStateChange',
             options=self.options,
             client=self.client,
             selector=('Name', 'ManagedSystem', 'Intel(r) AMT Power Management Service', ),
+            args_before=[('PowerState', str(power_state)), ],
+            anonymous=True,
         )
 
     @property
@@ -391,6 +393,8 @@ class AMTBoot(DeviceCapability):
             if value in source['StructuredBootString']:
                 instance_id = source['InstanceID']
                 break
+        else:
+            raise RuntimeError('TODO: Replace this with a proper error!')
 
         boot_config = self.get('CIM_BootConfigSetting') # Should be an
         # enumerate, as it has intances... But for now...
@@ -441,7 +445,7 @@ class AMTBoot(DeviceCapability):
             options=self.options,
             client=self.client,
             selector=('InstanceID', 'Intel(r) AMT: Boot Configuration 0', ),
-            method_args=[('Role', role)],
+            args_after=[('Role', role)],
         )
 
     def _set_capabilities(self, enabled_state, *capabilities):

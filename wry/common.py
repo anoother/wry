@@ -131,7 +131,7 @@ def put_resource(client, indict, options=None, uri=None, silent=False):
     return WryDict(doc)
 
 
-def invoke_method(service_name, resource_name, affected_item, method_name, options, client, selector=None, method_args=(), anonymous=False):
+def invoke_method(service_name, resource_name, affected_item, method_name, options, client, selector=None, args_before=(), args_after=(), anonymous=False):
     '''
     selector should be a dictionary in the form:
     {selector_name: {element_name: element_value}} ???
@@ -143,26 +143,35 @@ def invoke_method(service_name, resource_name, affected_item, method_name, optio
         address_schema = 'addressing'
     options = options.__copy__()
     service_uri = RESOURCE_URIs[service_name]
-    data = {
-        method_name + '_INPUT': OrderedDict([
+
+    data = {method_name + '_INPUT': OrderedDict()}
+    for arg_name, arg_value in args_before:
+        data[method_name + '_INPUT'][arg_name] = {
+            '#text': arg_value,
+            '@xmlns': service_uri,
+        }
+    data[method_name + '_INPUT'].update(OrderedDict([
+        ('@xmlns', service_uri),
+        (affected_item, OrderedDict([
             ('@xmlns', service_uri),
-            (affected_item, OrderedDict([
-                ('@xmlns', service_uri),
-                ('Address', {
-                    '#text': SCHEMAS[address_schema],
-                    '@xmlns': SCHEMAS['addressing'],
-                }),
-                ('ReferenceParameters', {
-                    'ResourceURI': {
-                        '#text': RESOURCE_URIs[resource_name],
-                        '@xmlns': SCHEMAS['wsman'],
-                    },
-                    '@xmlns': SCHEMAS['addressing'],
-                }),
-            ])
-            )
-        ])
-    }
+            ('Address', {
+                '#text': SCHEMAS[address_schema],
+                '@xmlns': SCHEMAS['addressing'],
+            }),
+            ('ReferenceParameters', {
+                'ResourceURI': {
+                    '#text': RESOURCE_URIs[resource_name],
+                    '@xmlns': SCHEMAS['wsman'],
+                },
+                '@xmlns': SCHEMAS['addressing'],
+            }),
+        ]))
+    ]))
+    for arg_name, arg_value in args_after:
+        data[method_name + '_INPUT'][arg_name] = {
+            '#text': arg_value,
+            '@xmlns': service_uri,
+        }
 
     if selector:
         data[method_name + '_INPUT'][affected_item]['ReferenceParameters']['SelectorSet'] = {
@@ -175,12 +184,6 @@ def invoke_method(service_name, resource_name, affected_item, method_name, optio
         if len(selector) > 2:
             assert len(selector) == 3
             options.add_selector(selector[0], selector[-1])
-
-    for arg_name, arg_value in method_args:
-        data[method_name + '_INPUT'][arg_name] = {
-            '#text': arg_value,
-            '@xmlns': service_uri,
-        }
 
     xml = xmltodict.unparse(data, full_document=False, pretty=True)
     print xml
