@@ -12,7 +12,7 @@
 
 
 import re
-from wry.monkey import pywsman
+import pywsman
 from collections import namedtuple
 from collections import OrderedDict
 from wry import common
@@ -193,6 +193,15 @@ class DeviceCapability(object):
         '''TODO: Rename this function...'''
         return common.enumerate_resource(self.client, resource_name, wsman_filter=wsman_filter, options=self.options)
 
+    def get_options_copy(self):
+        new_options = pywsman.ClientOptions()
+        for attr in dir(self.options):
+            if attr.startswith('get_'):
+                setter = attr.replace('get_', 'set_')
+                value = getattr(self.options, attr)()
+                getattr(self.options, setter)(value)
+        return new_options
+
 
 class AMTPower(DeviceCapability):
     '''Control over a device's power state.'''
@@ -230,7 +239,7 @@ class AMTPower(DeviceCapability):
                 },  
             }
         }    
-        options = self.options.__copy__()
+        options = self.get_options_copy()
         options.add_selector('Name', 'Intel(r) AMT Power Management Service')
         response = common.invoke_method(self.client, 'RequestPowerStateChange', input_dict, options=options)
         return not response['RequestPowerStateChange_OUTPUT']['ReturnValue']
@@ -453,7 +462,7 @@ class AMTBoot(DeviceCapability):
                 }
             }
 
-            options = self.options.__copy__()
+            options = self.get_options_copy()
             options.set_timeout(60000)
             options.add_selector('InstanceID', config_instance)
             response = common.invoke_method(self.client, 'ChangeBootOrder', input_dict, options=options)
