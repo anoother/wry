@@ -200,6 +200,8 @@ class DeviceCapability(object):
                 setter = attr.replace('get_', 'set_')
                 value = getattr(self.options, attr)()
                 getattr(self.options, setter)(value)
+        if self.options.get_flags() == 16:
+            new_options.set_dump_request()
         return new_options
 
 
