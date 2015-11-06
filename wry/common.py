@@ -15,14 +15,15 @@ Common functionalities for AMT Driver
 """
 import logging
 import xmltodict
+import pywsman
 from ast import literal_eval
 from xml.etree import ElementTree
-from wry.monkey import pywsman
+from wry import data_structures
 from wry import exceptions
 from wry.decorators import retry, add_client_options
 from wry.config import RESOURCE_URIs, SCHEMAS
 from wry.data_structures import _strip_namespace_prefixes, WryDict
-from collections import OrderedDict # Temporary
+from collections import OrderedDict
 
 
 
@@ -43,6 +44,18 @@ def _validate(doc, silent=False):
         if doc.is_fault():
             raise exceptions.WSManFault(doc)
     return doc
+
+
+def get_options_copy(options):
+    new_options = pywsman.ClientOptions()
+    for attr in dir(options):
+        if attr.startswith('get_'):
+            setter = attr.replace('get_', 'set_')
+            value = getattr(options, attr)()
+            getattr(options, setter)(value)
+    if options.get_flags() == 16:
+        new_options.set_dump_request()
+    return new_options
 
 
 @add_client_options
@@ -139,7 +152,7 @@ def invoke_method(service_name, method_name, options, client, resource_name=None
         address_schema = 'addressing_anonymous'
     else:
         address_schema = 'addressing'
-    options = options.__copy__()
+    options = get_options_copy(options)
     service_uri = RESOURCE_URIs[service_name]
 
     def add_arguments(data_dict, argument_pairs=()):

@@ -15,7 +15,6 @@ import mock
 import pywsman
 import tempfile
 import os
-
 import wry
 
 #: Do not retry connections, as there is nothing to connect to. This does not work :(

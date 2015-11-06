@@ -12,7 +12,7 @@
 
 from functools import wraps
 from time import sleep
-from wry.monkey import pywsman
+import pywsman
 from wry.config import CONNECT_RETRIES
 from wry.exceptions import AMTConnectFailure
 

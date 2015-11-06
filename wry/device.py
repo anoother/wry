@@ -12,7 +12,7 @@
 
 
 import re
-from wry.monkey import pywsman
+import pywsman
 from collections import namedtuple
 from collections import OrderedDict
 from wry import common
@@ -192,7 +192,6 @@ class DeviceCapability(object):
     def walk(self, resource_name,  wsman_filter=None):
         '''TODO: Rename this function...'''
         return common.enumerate_resource(self.client, resource_name, wsman_filter=wsman_filter, options=self.options)
-
 
 class AMTPower(DeviceCapability):
     '''Control over a device's power state.'''
