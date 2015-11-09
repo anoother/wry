@@ -360,16 +360,6 @@ class AMTKVM(DeviceCapability):
 class AMTBoot(DeviceCapability):
     '''Control how the machine will boot next time.'''
 
-    @lazy_property
-    def capabilities(self):
-        '''A WryDict of boot capabilities.'''
-        return self.get('AMT_BootCapabilities')
-
-    @property
-    def _supported_capabilities(self):
-        '''Supported boot capabilities.'''
-        return tuple(key for key, value in self.capabilities.items() if value == True)
-
     @property
     def supported_media(self):
         '''Media the device can be configured to boot from.'''
@@ -418,22 +408,9 @@ class AMTBoot(DeviceCapability):
         return response
 
     @property
-    def supported_options(self):
-        '''Boot capabilities supported by the device, that are not boot media.'''
-        return tuple(cap for cap in self._supported_capabilities if not re.match(r'^Force(.+)Boot$', cap))
-
-    @property
     def config(self):
         '''Get configuration for the machine's next boot.'''
         return self.get('AMT_BootSettingData')
-
-    def enable(self, *capabilities):
-        '''Enable the specified capabilit[ies] for next boot.'''
-        return self._set_capabilities(True, *capabilities)
-
-    def disable(self, *capabilities):
-        '''Disable the specified capabilit[ies] for next boot.'''
-        return self._set_capabilities(False, *capabilities)
 
     def _set_boot_config_role(self, enabled_state=True):
         if enabled_state == True:
@@ -453,17 +430,3 @@ class AMTBoot(DeviceCapability):
             args_after=[('Role', role)],
         )
 
-    def _set_capabilities(self, enabled_state, *capabilities):
-        to_put = dict((cap, enabled_state) for cap in capabilities) # The best
-        # way of doing it? Just do kwargs instead? And need to block trying to
-        # change boot order from here...
-        settings = self.get('AMT_BootSettingData')
-        for setting in settings:
-            if type(settings[setting]) == int:
-                settings[setting] = 0
-            elif type(settings[setting]) == bool:
-                settings[setting] = False
-            else:
-                pass
-        settings.update(to_put)
-        returned = self.put('AMT_BootSettingData', settings)
