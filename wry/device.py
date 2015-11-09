@@ -399,7 +399,7 @@ class AMTBoot(DeviceCapability):
                 instance_id = source['InstanceID']
                 break
         else:
-            raise RuntimeError('TODO: Replace this with a proper error!')
+            raise LookupError('This medium is not supported by the device')
 
         boot_config = self.get('CIM_BootConfigSetting') # Should be an
         # enumerate, as it has intances... But for now...
