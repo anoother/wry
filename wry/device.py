@@ -271,6 +271,10 @@ class AMTPower(DeviceCapability):
 class AMTKVM(DeviceCapability):
     '''Control over a device's KVM (VNC) functionality.'''
 
+    def __init__(self, *args, **kwargs):
+        self._consent_values = common.RadioButtons(None, 'KVM', 'All')
+        super(AMTKVM, self).__init__(*args, **kwargs)
+
     def request_state_change(self, resource_name, requested_state):
         input_dict = {
             resource_name:
@@ -360,3 +364,13 @@ class AMTKVM(DeviceCapability):
 
     def password(self, password=None):
         raise NotImplemented
+
+    @property
+    def consent_required(self):
+        self._consent_values.selected = get_consent_required()
+        return self._consent_values
+
+    @consent_required.setter
+    def consent_required(self, value):
+        do_stuff()
+        self._consent_values.selected = value

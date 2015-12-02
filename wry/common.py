@@ -143,3 +143,68 @@ def invoke_method(client, method, input_dict, options=None):
         raise exceptions.NonZeroReturn(return_value)
     return returned
 
+
+class RadioButtons(object):
+    def __init__(self, *values):
+        self.values = values
+        self._selected_value = Ellipsis
+
+    def __repr__(self):
+        out = []
+        for value in self.values:
+            if value == self._selected_value:
+                out.append('<%r>' % value)
+            else:
+                out.append(value.__repr__())
+        return ' | '.join(out)
+
+    def __str__(self):
+        return self.__repr__()
+
+    @property
+    def selected(self):
+        return self._selected_value
+
+    @selected.setter
+    def selected(self, value):
+        if value in self.values:
+            self._selected_value = value
+        else:
+            raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
+ 
+ class ToggleButtons(object)
+    def __init__(self, *values):
+        self.values = values
+        self.selected_values = [Ellipsis, ]
+
+    def __repr__(self):
+        for value in self.values:
+            if value in self._selected_values:
+                out.append('<%r>' % value)
+            else:
+                out.append(value.__repr__())
+        return ' | '.join(out)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def toggle(self, value):
+        if value not in self.values:
+            raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
+        try:
+            self.selected_values.remove(value)
+        except ValueError:
+            self.selected_values.append(value)
+
+    @property
+    def selected(self):
+        return self._selected_values
+
+    @selected.setter
+    def selected(self, values):
+        to_set = []
+        for value in values:
+            if value not in self.values:
+                raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
+            to_set.append(value)
+        self._selected_values = to_set
