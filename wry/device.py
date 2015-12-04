@@ -315,14 +315,23 @@ class AMTKVM(DeviceCapability):
         if invalid:
             raise ValueError('Invalid port(s) specified: %r. Valid ports are %r.'
                 % (invalid, self.enabled_ports.values))
+        if 16995 in values:
+            if 16995 in self.enabled_ports.selected and 16994 in values:
+                pass
+            else:
+                if self.walk('AMT_TLSSettingData')['AMT_TLSSettingData'][0]['Enabled']:
+                    if 16994 in values:
+                        pass
+                    else:
+                        raise ValueError('Port 16995 cannot be enabled unless port 16994 is enabled also.')
+                else:
+                    raise ValueError('Port 16995 can only be set by enabling both TLS and port 16994.')
         for port in values:
             if port not in self.enabled_ports.selected:
                 if port == 5900:
                     self.put('IPS_KVMRedirectionSettingData', {'Is5900PortEnabled': port})
                 elif port == 16994:
                     self.put('AMT_RedirectionService', {'ListenerEnabled': True})
-                elif port == 16995:
-                    raise ValueError('Port 16995 can only be set by enabling both TLS and port 16994.')
                 self.enabled_ports.toggle(port)
 
     @property
