@@ -315,14 +315,10 @@ class AMTKVM(DeviceCapability):
         if invalid:
             raise ValueError('Invalid port(s) specified: %r. Valid ports are %r.'
                 % (invalid, self.enabled_ports.values))
-        if 16995 in values:
-            if 16995 in self.enabled_ports.selected and 16994 in values:
-                pass
-            else:
+        if 16995 in values and 16995 not in self.enabled_ports.selected:
+            if 16994 not in values
                 if self.walk('AMT_TLSSettingData')['AMT_TLSSettingData'][0]['Enabled']:
-                    if 16994 in values:
-                        pass
-                    else:
+                    if 16994 not in values:
                         raise ValueError('Port 16995 cannot be enabled unless port 16994 is enabled also.')
                 else:
                     raise ValueError('Port 16995 can only be set by enabling both TLS and port 16994.')
