@@ -310,21 +310,23 @@ class AMTKVM(DeviceCapability):
         return ports
 
     @enabled_ports.setter
-    def enabled_ports(self, ports): # Need to rename that 'ports' variable, it is confusing...
+    def enabled_ports(self, values):
+        ports = self.enabled_ports.values
+        selected = self.enabled_ports.selected
         # Validation:
-        invalid = list(set(ports) - set(self.enabled_ports.values))
+        invalid = list(set(values) - set(ports))
         if invalid:
             raise ValueError('Invalid port(s) specified: %r. Valid ports are %r.'
-                % (invalid, self.enabled_ports.values))
-        if 16995 in ports and 16995 not in self.enabled_ports.selected:
-            if 16994 not in ports:
+                % (invalid, ports))
+        if 16995 in values and 16995 not in selected:
+            if 16994 not in values:
                 raise ValueError('Port 16995 cannot be enabled unless port 16994 is enabled also.')
             else:
                 if not self.walk('AMT_TLSSettingData')['AMT_TLSSettingData'][0]['Enabled']:
                     raise ValueError('Port 16995 can only be set by enabling both TLS and port 16994.')
         # Setter logic:
-        for port, enable in [(port, port in ports) for port in self.enabled_ports.values]:
-            if (enable and port not in self.enabled_ports.selected) or (not enable and port in self.enabled_ports.selected):
+        for port, enable in [(port, port in values) for port in ports]:
+            if (enable and port not in selected) or (not enable and port in selected):
                 if port == 5900:
                     self.put('IPS_KVMRedirectionSettingData', {'Is5900PortEnabled': enable})
                 elif port == 16994:
