@@ -309,24 +309,35 @@ class AMTKVM(DeviceCapability):
 
     @property
     def enabled_ports(self):
-        raise NotImplemented
+        '''Tells you (and/or allows you to set) the enabled ports for VNC.'''
+        ports = common.ToggleButtons(5900, 16994, 16995)
+        if self.get('IPS_KVMRedirectionSettingData', 'Is5900PortEnabled'):
+            ports.toggle(5900)
+        if self.get('AMT_RedirectionService', 'ListenerEnabled'):
+            ports.toggle(16994)
+            if self.enumerate_resource('AMT_TLSSettingData')[0]['Enabled']:
+                ports.toggle(16995)
+        return ports
 
-    @property
-    def port_5900_enabled(self):
-        '''
-        Whether the standard VNC port (5900) is enabled. True/False.
-        '''
-        return self.get('IPS_KVMRedirectionSettingData', 'Is5900PortEnabled')
-    @port_5900_enabled.setter
-    def port_5900_enabled(self, value):
-        return self.put('IPS_KVMRedirectionSettingData', {'Is5900PortEnabled': value})
+    @enabled_ports.setter
+    def enabled_ports(self, values):
+        for port in values:
+            if port not in self.enabled_ports.selected:
+                if port == 5900:
+                    self.put('IPS_KVMRedirectionSettingData', {'Is5900PortEnabled': port})
+                if port == 16994:
+                    self.put('AMT_RedirectionService', {'ListenerEnabled': True})
+                if port == 16995:
+                    raise ValueError('Port 16995 can only be set by enabling TLS.')
+                else:
+                    raise ValueError('%s is not a valid port. Please choose one of %r.' % (port, self.enabled_ports.values))
+                self.enabled_ports.toggle(port)
 
     @property
     def default_screen(self):
-        '''
-        Default Screen. An integer.
-        '''
+        ''' Default Screen. An integer.'''
         return self.get('IPS_KVMRedirectionSettingData', 'DefaultScreen')
+
     @default_screen.setter
     def default_screen(self, value):
          return self.put({'DefaultScreen': value})
@@ -339,11 +350,10 @@ class AMTKVM(DeviceCapability):
         If set to 0, opt-in will be disabled.
         '''
         timeout = (not self.get('IPS_KVMRedirectionSettingData', 'OptInPolicy')) or self.get('IPS_KVMRedirectionSettingData', 'OptInPolicyTimeout')
-        if timeout == True: # This is NOT READABLE...
+        if timeout is True:
             return 0
         return timeout
-        # Would be nice to have a way to get multiple values without querying
-        # twice...
+
     @opt_in_timeout.setter
     def opt_in_timeout(self, value):
         if not value:
