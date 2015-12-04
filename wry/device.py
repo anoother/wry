@@ -16,7 +16,7 @@ import re
 from collections import namedtuple
 from collections import OrderedDict
 from wry import common
-from wry.data_structures import WryDict
+from wry.data_structures import WryDict, RadioButtons, ToggleButtons
 from wry import common
 from wry import exceptions
 from wry.config import RESOURCE_METHODS, RESOURCE_URIs, SCHEMAS
@@ -256,7 +256,7 @@ class AMTKVM(DeviceCapability):
     '''Control over a device's KVM (VNC) functionality.'''
 
     def __init__(self, *args, **kwargs):
-        self._consent_values = common.RadioButtons(None, 'KVM', 'All')
+        self._consent_values = RadioButtons(None, 'KVM', 'All')
         super(AMTKVM, self).__init__(*args, **kwargs)
 
     def request_state_change(self, resource_name, requested_state):
@@ -300,7 +300,7 @@ class AMTKVM(DeviceCapability):
     @property
     def enabled_ports(self):
         '''Tells you (and/or allows you to set) the enabled ports for VNC.'''
-        ports = common.ToggleButtons(5900, 16994, 16995)
+        ports = ToggleButtons(5900, 16994, 16995)
         if self.get('IPS_KVMRedirectionSettingData', 'Is5900PortEnabled'):
             ports.toggle(5900)
         if self.get('AMT_RedirectionService', 'ListenerEnabled'):
