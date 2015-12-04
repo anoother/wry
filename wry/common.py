@@ -233,8 +233,9 @@ class RadioButtons(object):
         else:
             raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
  
- class ToggleButtons(object)
+class ToggleButtons(object):
     def __init__(self, *values):
+        ''' Might want to stop people providing None.'''
         self.values = values
         self.selected_values = [Ellipsis, ]
 
