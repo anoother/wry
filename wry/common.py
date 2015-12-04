@@ -237,9 +237,10 @@ class ToggleButtons(object):
     def __init__(self, *values):
         ''' Might want to stop people providing None.'''
         self.values = values
-        self.selected_values = [Ellipsis, ]
+        self._selected_values = [Ellipsis, ]
 
     def __repr__(self):
+        out = []
         for value in self.values:
             if value in self._selected_values:
                 out.append('<%r>' % value)
@@ -250,13 +251,21 @@ class ToggleButtons(object):
     def __str__(self):
         return self.__repr__()
 
+    def __iadd__(self, value):
+        if value not in self._selected_values:
+            self.toggle(value)
+
+    def __isub__(self, value):
+        if value in self._selected_values:
+            self.toggle(value)
+
     def toggle(self, value):
         if value not in self.values:
             raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
         try:
-            self.selected_values.remove(value)
+            self._selected_values.remove(value)
         except ValueError:
-            self.selected_values.append(value)
+            self._selected_values.append(value)
 
     @property
     def selected(self):
