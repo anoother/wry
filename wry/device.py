@@ -300,7 +300,15 @@ class AMTKVM(DeviceCapability):
     @property
     def enabled_ports(self):
         '''Tells you (and/or allows you to set) the enabled ports for VNC.'''
-        ports = ToggleButtons(5900, 16994, 16995)
+
+        def iadd(values):
+            self.enabled_ports = self.enabled_ports.selected + values
+
+        def isub(values):
+            self.enabled_ports = set(self.enabled_ports.values) - set(values)
+
+        ports = ToggleButtons(5900, 16994, 16995, iadd=iadd, isub=isub)
+
         if self.get('IPS_KVMRedirectionSettingData', 'Is5900PortEnabled'):
             ports.toggle(5900)
         if self.get('AMT_RedirectionService', 'ListenerEnabled'):
@@ -309,11 +317,15 @@ class AMTKVM(DeviceCapability):
                 ports.toggle(16995)
         return ports
 
+
+
     @enabled_ports.setter
     def enabled_ports(self, values):
         ports = self.enabled_ports.values
         selected = self.enabled_ports.selected
         # Validation:
+        print 'values: ', values
+        print 'ports: ', ports
         invalid = list(set(values) - set(ports))
         if invalid:
             raise ValueError('Invalid port(s) specified: %r. Valid ports are %r.'
@@ -326,12 +338,13 @@ class AMTKVM(DeviceCapability):
                     raise ValueError('Port 16995 can only be set by enabling both TLS and port 16994.')
         # Setter logic:
         for port, enable in [(port, port in values) for port in ports]:
-            if (enable and port not in selected) or (not enable and port in selected):
+            if (enable and port not in selected) or (not enable and port in selected): # not working with empty list...
                 if port == 5900:
                     self.put('IPS_KVMRedirectionSettingData', {'Is5900PortEnabled': enable})
                 elif port == 16994:
                     self.put('AMT_RedirectionService', {'ListenerEnabled': enable})
                 self.enabled_ports.toggle(port)
+        #return self.enabled_ports
 
     @property
     def default_screen(self):

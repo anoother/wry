@@ -160,10 +160,11 @@ class RadioButtons(object):
             raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
  
 class ToggleButtons(object):
-    def __init__(self, *values):
+    def __init__(self, *values, **options):
         ''' Might want to stop people providing None.'''
         self.values = values
-        self._selected_values = [Ellipsis, ]
+        self.options = options
+        self._selected_values = []
 
     def __repr__(self):
         out = []
@@ -178,12 +179,16 @@ class ToggleButtons(object):
         return self.__repr__()
 
     def __iadd__(self, value):
-        if value not in self._selected_values:
-            self.toggle(value)
+        try:
+            return self.options['iadd'](value)
+        except (KeyError, TypeError):
+            raise AttributeError('No iadd function specified.')
 
     def __isub__(self, value):
-        if value in self._selected_values:
-            self.toggle(value)
+        try:
+            return self.options['isub'](value)
+        except (KeyError, TypeError):
+            raise AttributeError('No isub function specified.')
 
     def toggle(self, value):
         if value not in self.values:
