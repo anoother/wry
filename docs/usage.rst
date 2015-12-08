@@ -17,7 +17,7 @@ If you wish to access the pure pywsman client object, it is available as ``dev.c
 .. .. automodule:: wry.device
     :members:
 
-.. autoclass:: wry.AMTDevice
+.. autoclass:: wry.device.AMTDevice
     :members:
 
 .. .. autoclass:: wry.device.DeviceCapability
@@ -36,6 +36,12 @@ If you wish to access the pure pywsman client object, it is available as ``dev.c
     :members:
 
 .. autoclass:: wry.device.AMTBoot
+    :members:
+
+.. autoclass:: wry.device.AMTOptIn
+    :members:
+
+.. autoclass:: wry.device.AMTRedirection
     :members:
 
 .. .. automodule:: wry.common
