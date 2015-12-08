@@ -368,9 +368,9 @@ class AMTKVM(DeviceCapability):
     @opt_in_timeout.setter
     def opt_in_timeout(self, value):
         if not value:
-             return self.put('IPS_KVMRedirectionSettingData', {'OptInPolicy': False})
+             self.put('IPS_KVMRedirectionSettingData', {'OptInPolicy': False})
         else:
-             return self.put('IPS_KVMRedirectionSettingData', {'OptInPolicy': True, 'OptInPolicyTimeout': value})
+             self.put('IPS_KVMRedirectionSettingData', {'OptInPolicy': True, 'OptInPolicyTimeout': value})
 
     @property
     def session_timeout(self):
@@ -381,7 +381,7 @@ class AMTKVM(DeviceCapability):
 
     @session_timeout.setter
     def session_timeout(self, value):
-        return self.put({'SessionTimeout': value})
+        self.put({'SessionTimeout': value})
 
     def password(self, password=None):
         raise NotImplemented
@@ -445,7 +445,6 @@ class AMTBoot(DeviceCapability):
             selector=('InstanceID', instance_id, config_instance, ),
         )
         self._set_boot_config_role()
-        return response
 
     @property
     def config(self):
