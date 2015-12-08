@@ -2,7 +2,7 @@ Wry's functionality is exposed through the AMTDevice class. Initialize it as suc
 
 .. code:: python
 
-    >>> from wry import AMTDevice
+    >>> from wry.device import AMTDevice
     >>> dev = AMTDevice 
 
 You can then access different apects of device functionality, through aspect-specific namespaces. For example:
