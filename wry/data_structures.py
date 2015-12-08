@@ -132,7 +132,7 @@ def _strip_namespace_prefixes(input_dict):
 
 
 class RadioButtons(object):
-    def __init__(self, *values):
+    def __init__(self, values):
         self.values = values
         self._selected_value = Ellipsis
 
@@ -162,6 +162,7 @@ class RadioButtons(object):
 
 class ToggleButtons(object):
     def __init__(self, *values, **options):
+        # Make this take ONE ARRAY of values...
         ''' Might want to stop people providing None.'''
         self.values = values
         self.options = options

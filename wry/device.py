@@ -88,7 +88,8 @@ class AMTDevice(object):
 
         self.boot = AMTBoot(self.client, self.options)
         self.power = AMTPower(self.client, self.options)
-        self.kvm = AMTKVM(self.client, self.options)
+        self.vnc = AMTKVM(self.client, self.options)
+        self.opt_in = AMTOptIn(self.client, self.options)
 
     @property
     def debug(self):
@@ -255,10 +256,6 @@ class AMTPower(DeviceCapability):
 class AMTKVM(DeviceCapability):
     '''Control over a device's KVM (VNC) functionality.'''
 
-    def __init__(self, *args, **kwargs):
-        self._consent_values = RadioButtons(None, 'KVM', 'All')
-        super(AMTKVM, self).__init__(*args, **kwargs)
-
     def request_state_change(self, resource_name, requested_state):
         input_dict = {
             resource_name:
@@ -351,7 +348,7 @@ class AMTKVM(DeviceCapability):
 
     @default_screen.setter
     def default_screen(self, value):
-         return self.put({'DefaultScreen': value})
+         self.put('IPS_KVMRedirectionSettingData', {'DefaultScreen': value})
 
     @property
     def opt_in_timeout(self):
@@ -375,7 +372,7 @@ class AMTKVM(DeviceCapability):
     @property
     def session_timeout(self):
         '''
-        Session timeout. An integer.
+        Session timeout. In minutes.
         '''
         return self.get('IPS_KVMRedirectionSettingData', 'SessionTimeout')
 
@@ -383,18 +380,65 @@ class AMTKVM(DeviceCapability):
     def session_timeout(self, value):
         self.put({'SessionTimeout': value})
 
-    def password(self, password=None):
-        raise NotImplemented
+    @property
+    def password(self):
+        raise AttributeError('This is a write-only attribute.')
+
+    @password.setter(self, value):
+        self.put('IPS_KVMRedirectionSettingData'), {'RFBPassword': value}
+
+
+class AMTOptIn(DeviceCapability):
+
+    def __init__(self, *args, **kwargs):
+        self._consent_mapping = OrderedDict([
+            (0, None),
+            (1, 'KVM'),
+            (4294967295, 'All'),
+        ])
+        self._consent_values = RadioButtons(self._consent_mapping.values())
+        super(AMTOptIn, self).__init__(*args, **kwargs)
 
     @property
-    def consent_required(self):
-        self._consent_values.selected = get_consent_required()
+    def required(self):
+        level = self._consent_mapping[self.get('IPS_OptInService', 'OptInRequired')]
+        self._consent_values.selected = level
         return self._consent_values
 
-    @consent_required.setter
-    def consent_required(self, value):
-        do_stuff()
+    @required.setter
+    def required(self, value):
+        for key, val in self._consent_mapping.items():
+            if value == val:
+                break
+        else:
+            raise KeyError
+        self.put('IPS_OptInService', {'OptInRequired': key})
         self._consent_values.selected = value
+
+    @property
+    def code_ttl(self):
+        '''How long an opt-in code lasts, in seconds.'''
+        return self.get('IPS_OptInService', 'OptInCodeTimeout')
+
+    @code_ttl.setter
+    def code_ttl(self, value):
+        try:
+            assert type(value) == int
+            assert 60 <= value <= 900
+        except (TypeError, AssertionError):
+            raise TypeError('TTL (in seconds) must be an integer between 60 and 900.')
+        self.put('IPS_OptInService', {'OptInCodeTimeout': value})
+
+    @property
+    def state(self):
+        mapping = {
+            0: 'Not started',
+            1: 'Requested',
+            2: 'Displayed',
+            3: 'Received',
+            4: 'In Session',
+        }
+        return mapping[self.get('IPS_OptInService', 'OptInState')]
 
 
 class AMTBoot(DeviceCapability):
