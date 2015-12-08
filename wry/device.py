@@ -90,6 +90,7 @@ class AMTDevice(object):
         self.power = AMTPower(self.client, self.options)
         self.vnc = AMTKVM(self.client, self.options)
         self.opt_in = AMTOptIn(self.client, self.options)
+        self.redirection = AMTRedirection(self.client, self.options)
 
     @property
     def debug(self):
@@ -384,11 +385,61 @@ class AMTKVM(DeviceCapability):
     def password(self):
         raise AttributeError('This is a write-only attribute.')
 
-    @password.setter(self, value):
+    @password.setter
+    def password(self, value):
         self.put('IPS_KVMRedirectionSettingData'), {'RFBPassword': value}
 
 
+class AMTRedirection(DeviceCapability):
+    '''Control over Serial-over-LAN and storage redirection.'''
+
+    def __init__(self, *args, **kwargs):
+        self._state_mapping = OrderedDict([
+            (0, 'Unknown'),
+            (1, 'Other'),
+            (2, 'Enabled'),
+            (3, 'Disabled'),
+            (4, 'Shutting Down'),
+            (5, 'Not Applicable'),
+            (6, 'Enabled but Offline'),
+            (7, 'In Test'),
+            (8, 'Deferred'),
+            (9, 'Quiesce'),
+            (10, 'Starting'),
+            (11, 'DMTF Reserved'),
+            (32768, 'IDER and SOL are disabled'),
+            (32769, 'IDER is enabled and SOL is disabled'),
+            (32770, 'SOL is enabled and IDER is disabled'),
+            (32771, 'IDER and SOL are enabled'),
+        ])
+        super(AMTRedirection, self).__init__(*args, **kwargs)
+    
+    @property
+    def _state_int(self):
+        return self.get('AMT_RedirectionService', 'EnabledState')
+
+    @property
+    def state(self):
+        return self._state_mapping[self._state_int]
+
+    @property
+    def enabled(self):
+        items = ToggleButtons('SoL', 'IDER')
+        state = self._state_int
+        if state >= 32768:
+            if state in (32769, 32771):
+                items.toggle('IDER')
+            if state in (32770, 32771):
+                items.toggle('SoL')
+        else:
+            if state in self._state_mapping:
+                raise LookupError('Unknown state discovered: %r' % self._state_mapping[state])
+            raise KeyError('Unknown state discovered: %r' % state)
+        return items
+
+
 class AMTOptIn(DeviceCapability):
+    '''Manage user consent and opt-in codes.'''
 
     def __init__(self, *args, **kwargs):
         self._consent_mapping = OrderedDict([
