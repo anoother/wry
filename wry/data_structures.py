@@ -110,7 +110,6 @@ def _convert_values(input_dict):
                 value = unicode(value)
         output[key] = value
     return output
-        
 
 
 def _strip_namespace_prefixes(input_dict):
@@ -130,6 +129,7 @@ def _strip_namespace_prefixes(input_dict):
         value = _strip_namespace_prefixes(value) or value
         outdict[key] = value
     return outdict
+
 
 class RadioButtons(object):
     def __init__(self, *values):
@@ -159,6 +159,7 @@ class RadioButtons(object):
         else:
             raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
  
+
 class ToggleButtons(object):
     def __init__(self, *values, **options):
         ''' Might want to stop people providing None.'''
@@ -180,13 +181,13 @@ class ToggleButtons(object):
 
     def __iadd__(self, value):
         try:
-            return self.options['iadd'](value)
+            self.options['iadd'](value)
         except (KeyError, TypeError):
             raise AttributeError('No iadd function specified.')
 
     def __isub__(self, value):
         try:
-            return self.options['isub'](value)
+            self.options['isub'](value)
         except (KeyError, TypeError):
             raise AttributeError('No isub function specified.')
 

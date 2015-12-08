@@ -317,15 +317,13 @@ class AMTKVM(DeviceCapability):
                 ports.toggle(16995)
         return ports
 
-
-
     @enabled_ports.setter
     def enabled_ports(self, values):
         ports = self.enabled_ports.values
         selected = self.enabled_ports.selected
-        # Validation:
         print 'values: ', values
         print 'ports: ', ports
+        # Validation:
         invalid = list(set(values) - set(ports))
         if invalid:
             raise ValueError('Invalid port(s) specified: %r. Valid ports are %r.'
@@ -338,7 +336,7 @@ class AMTKVM(DeviceCapability):
                     raise ValueError('Port 16995 can only be set by enabling both TLS and port 16994.')
         # Setter logic:
         for port, enable in [(port, port in values) for port in ports]:
-            if (enable and port not in selected) or (not enable and port in selected): # not working with empty list...
+            if (enable and port not in selected) or (not enable and port in selected):
                 if port == 5900:
                     self.put('IPS_KVMRedirectionSettingData', {'Is5900PortEnabled': enable})
                 elif port == 16994:
@@ -370,9 +368,9 @@ class AMTKVM(DeviceCapability):
     @opt_in_timeout.setter
     def opt_in_timeout(self, value):
         if not value:
-             return self.put({'OptInPolicy': False})
+             return self.put('IPS_KVMRedirectionSettingData', {'OptInPolicy': False})
         else:
-             return self.put({'OptInPolicy': True, 'OptInPolicyTimeout': value})
+             return self.put('IPS_KVMRedirectionSettingData', {'OptInPolicy': True, 'OptInPolicyTimeout': value})
 
     @property
     def session_timeout(self):
