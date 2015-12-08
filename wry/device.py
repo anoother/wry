@@ -415,17 +415,9 @@ class AMTRedirection(DeviceCapability):
         super(AMTRedirection, self).__init__(*args, **kwargs)
     
     @property
-    def _state_int(self):
-        return self.get('AMT_RedirectionService', 'EnabledState')
-
-    @property
     def state(self):
-        return self._state_mapping[self._state_int]
-
-    @property
-    def enabled(self):
         items = ToggleButtons('SoL', 'IDER')
-        state = self._state_int
+        state = self.get('AMT_RedirectionService', 'EnabledState')
         if state >= 32768:
             if state in (32769, 32771):
                 items.toggle('IDER')
@@ -436,6 +428,9 @@ class AMTRedirection(DeviceCapability):
                 raise LookupError('Unknown state discovered: %r' % self._state_mapping[state])
             raise KeyError('Unknown state discovered: %r' % state)
         return items
+
+    @state.setter(self, value):
+        pass
 
 
 class AMTOptIn(DeviceCapability):
