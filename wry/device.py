@@ -16,7 +16,7 @@ import re
 from collections import namedtuple
 from collections import OrderedDict
 from wry import common
-from wry.data_structures import WryDict, RadioButtons, ToggleButtons
+from wry.data_structures import WryDict, RadioButtons, EnablementMap
 from wry import common
 from wry import exceptions
 from wry.config import RESOURCE_METHODS, RESOURCE_URIs, SCHEMAS
@@ -300,12 +300,12 @@ class AMTKVM(DeviceCapability):
         '''Tells you (and/or allows you to set) the enabled ports for VNC.'''
 
         def iadd(values):
-            self.enabled_ports = self.enabled_ports.selected + values
+            self.enabled_ports = self.enabled_ports.enabled + values
 
         def isub(values):
             self.enabled_ports = set(self.enabled_ports.values) - set(values)
 
-        ports = ToggleButtons(5900, 16994, 16995, iadd=iadd, isub=isub)
+        ports = EnablementMap(5900, 16994, 16995, iadd=iadd, isub=isub)
 
         if self.get('IPS_KVMRedirectionSettingData', 'Is5900PortEnabled'):
             ports.toggle(5900)
@@ -318,7 +318,7 @@ class AMTKVM(DeviceCapability):
     @enabled_ports.setter
     def enabled_ports(self, values):
         ports = self.enabled_ports.values
-        selected = self.enabled_ports.selected
+        enabled = self.enabled_ports.enabled
         print 'values: ', values
         print 'ports: ', ports
         # Validation:
@@ -326,7 +326,7 @@ class AMTKVM(DeviceCapability):
         if invalid:
             raise ValueError('Invalid port(s) specified: %r. Valid ports are %r.'
                 % (invalid, ports))
-        if 16995 in values and 16995 not in selected:
+        if 16995 in values and 16995 not in enabled:
             if 16994 not in values:
                 raise ValueError('Port 16995 cannot be enabled unless port 16994 is enabled also.')
             else:
@@ -334,7 +334,7 @@ class AMTKVM(DeviceCapability):
                     raise ValueError('Port 16995 can only be set by enabling both TLS and port 16994.')
         # Setter logic:
         for port, enable in [(port, port in values) for port in ports]:
-            if (enable and port not in selected) or (not enable and port in selected):
+            if (enable and port not in enabled) or (not enable and port in enabled):
                 if port == 5900:
                     self.put('IPS_KVMRedirectionSettingData', {'Is5900PortEnabled': enable})
                 elif port == 16994:
@@ -416,7 +416,7 @@ class AMTRedirection(DeviceCapability):
     
     @property
     def state(self):
-        items = ToggleButtons('SoL', 'IDER')
+        items = EnablementMap('SoL', 'IDER')
         state = self.get('AMT_RedirectionService', 'EnabledState')
         if state >= 32768:
             if state in (32769, 32771):

@@ -160,22 +160,19 @@ class RadioButtons(object):
             raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
  
 
-class ToggleButtons(object):
+class EnablementMap(object):
     def __init__(self, *values, **options):
         # Make this take ONE ARRAY of values...
         ''' Might want to stop people providing None.'''
         self.values = values
         self.options = options
-        self._selected_values = []
+        self._enabled_values = []
 
     def __repr__(self):
         out = []
-        for value in self.values:
-            if value in self._selected_values:
-                out.append('<%r>' % value)
-            else:
-                out.append(value.__repr__())
-        return ' | '.join(out)
+        return 'EnablementMap(%s)' % ', '.join(
+                ['%s: %s' % (value.__repr__, value in self.options) for value in self.values]
+        )
 
     def __str__(self):
         return self.__repr__()
@@ -196,20 +193,20 @@ class ToggleButtons(object):
         if value not in self.values:
             raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
         try:
-            self._selected_values.remove(value)
+            self._enabled_values.remove(value)
         except ValueError:
-            self._selected_values.append(value)
+            self._enabled_values.append(value)
 
     @property
-    def selected(self):
-        return self._selected_values
+    def enabled(self):
+        return self._enabled_values
 
-    @selected.setter
-    def selected(self, values):
+    @enabled.setter
+    def enabled(self, values):
         to_set = []
         for value in values:
             if value not in self.values:
                 raise TypeError('%r is an invalid value. Choose one of %r.' % (value, self.values))
             to_set.append(value)
-        self._selected_values = to_set
+        self._enabled_values = to_set
 
