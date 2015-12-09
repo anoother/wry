@@ -161,6 +161,7 @@ class RadioButtons(object):
  
 
 class EnablementMap(object):
+    '''TODO: Refactor this to just be a dict. It should simplify things a lot.'''
     def __init__(self, *values, **options):
         # Make this take ONE ARRAY of values...
         ''' Might want to stop people providing None.'''

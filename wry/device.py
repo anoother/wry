@@ -415,7 +415,7 @@ class AMTRedirection(DeviceCapability):
         super(AMTRedirection, self).__init__(*args, **kwargs)
     
     @property
-    def state(self):
+    def enabled_features(self):
         items = EnablementMap('SoL', 'IDER')
         state = self.get('AMT_RedirectionService', 'EnabledState')
         if state >= 32768:
@@ -429,8 +429,18 @@ class AMTRedirection(DeviceCapability):
             raise KeyError('Unknown state discovered: %r' % state)
         return items
 
-    @state.setter(self, value):
-        pass
+    @enabled_features.setter
+    def enabled_features(self, features):
+        if not features:
+            self.put('AMT_RedirectionService', {'EnabledState': 32768})
+        elif set(features) == set(['SoL', 'IDER']):
+            self.put('AMT_RedirectionService', {'EnabledState': 32771})
+        elif features[0] == 'SoL':
+            self.put('AMT_RedirectionService', {'EnabledState': 32770})
+        elif features[0] == 'IDER':
+            self.put('AMT_RedirectionService', {'EnabledState': 32769})
+        else:
+            raise ValueError('Invalid data provided. Please provide a list comprising only of the following elements: %s' % ', '.join([value.__repr__ for value in self.enabled.values])
 
 
 class AMTOptIn(DeviceCapability):
