@@ -440,7 +440,7 @@ class AMTRedirection(DeviceCapability):
         elif features[0] == 'IDER':
             self.put('AMT_RedirectionService', {'EnabledState': 32769})
         else:
-            raise ValueError('Invalid data provided. Please provide a list comprising only of the following elements: %s' % ', '.join([value.__repr__ for value in self.enabled.values])
+            raise ValueError('Invalid data provided. Please provide a list comprising only of the following elements: %s' % ', '.join([value.__repr__ for value in self.enabled.values]))
 
 
 class AMTOptIn(DeviceCapability):

@@ -16,6 +16,7 @@ import pywsman
 import tempfile
 import os
 import wry
+from wry import device
 from wry.tests import data
 
 
@@ -42,7 +43,7 @@ class PowerTests(WryTest):
 
     def setUp(self):
         super(PowerTests, self).setUp()
-        self.power = wry.device.AMTPower(self.client, self.options)
+        self.power = device.AMTPower(self.client, self.options)
 
     @mock.patch('wry.decorators.CONNECT_RETRIES', 0)
     def test_power_on(self):
@@ -62,7 +63,7 @@ class KVMTests(WryTest):
 
     def setUp(self):
         super(KVMTests, self).setUp()
-        self.kvm = wry.device.AMTKVM(self.client, self.options)
+        self.kvm = device.AMTKVM(self.client, self.options)
 
     @mock.patch('wry.decorators.CONNECT_RETRIES', 0)
     def test_kvm_enable(self):
@@ -73,8 +74,24 @@ class KVMTests(WryTest):
         with open(self.dumpfile_name, 'r') as output:
             self.assertRegexpMatches(
                 output.read(),
-                data.kvm_enable(),
+                data.kvm_enable(2),
             )
+
+    @mock.patch('wry.decorators.CONNECT_RETRIES', 0)
+    def test_kvm_disable(self):
+        try:
+            self.kvm.enabled = False
+        except wry.exceptions.AMTConnectFailure:
+            pass
+        with open(self.dumpfile_name, 'r') as output:
+            self.assertRegexpMatches(
+                output.read(),
+                data.kvm_enable(3),
+            )
+
+    @mock.patch('wry.decorators.CONNECT_RETRIES', 0)
+    def test_kvm_ports(self):
+        pass
 
 
 class BootTests(WryTest):
@@ -82,7 +99,7 @@ class BootTests(WryTest):
 
     def setUp(self):
         super(BootTests, self).setUp()
-        self.boot = wry.device.AMTBoot(self.client, self.options)
+        self.boot = device.AMTBoot(self.client, self.options)
 
     @mock.patch.multiple(pywsman.Client,
         get=data.client_get,

@@ -172,7 +172,7 @@ class EnablementMap(object):
     def __repr__(self):
         out = []
         return 'EnablementMap(%s)' % ', '.join(
-                ['%s: %s' % (value.__repr__, value in self.options) for value in self.values]
+                ['%s: %s' % (value.__repr__(), value in self.options) for value in self.values]
         )
 
     def __str__(self):
