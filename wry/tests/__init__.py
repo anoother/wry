@@ -89,9 +89,18 @@ class KVMTests(WryTest):
                 data.kvm_enable(3),
             )
 
-    @mock.patch('wry.decorators.CONNECT_RETRIES', 0)
-    def test_kvm_ports(self):
-        pass
+    #@mock.patch('wry.decorators.CONNECT_RETRIES', 0)
+    #def test_kvm_ports_5900(self):
+    #    pass
+
+    #def test_kvm_ports_16994(self):
+    #    pass
+
+    #def test_kvm_ports_both(self):
+    #    pass
+
+    #def test_kvm_ports_none(self):
+    #    pass
 
 
 class BootTests(WryTest):
