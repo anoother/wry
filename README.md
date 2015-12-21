@@ -1,5 +1,3 @@
-# Wry
-
 A Pythonic AMT provisioning, configuration and management library.
 
 It is [very] loosely based on the OpenStack Ironic project, hence the name.
