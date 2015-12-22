@@ -387,7 +387,7 @@ class AMTKVM(DeviceCapability):
 
     @password.setter
     def password(self, value):
-        self.put('IPS_KVMRedirectionSettingData'), {'RFBPassword': value}
+        self.put('IPS_KVMRedirectionSettingData', {'RFBPassword': value})
 
 
 class AMTRedirection(DeviceCapability):
