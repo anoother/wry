@@ -379,7 +379,7 @@ class AMTKVM(DeviceCapability):
 
     @session_timeout.setter
     def session_timeout(self, value):
-        self.put({'SessionTimeout': value})
+        self.put('IPS_KVMRedirectionSettingData', {'SessionTimeout': value})
 
     @property
     def password(self):
